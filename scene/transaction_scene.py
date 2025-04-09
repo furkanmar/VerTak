@@ -40,9 +40,9 @@ class TransactionScene(QWidget):
 
         # İşlem tablosu
         self.transaction_table = QTableWidget()
-        self.transaction_table.setColumnCount(8)
+        self.transaction_table.setColumnCount(9)
         self.transaction_table.setHorizontalHeaderLabels([
-            "İşlem ID", "İşlem Tarihi", "Açıklama", "Alacak Tutar", "Borç Tutar","Anlık Net Tutar", "Ödeme Türü", "Fatura Var mı?"
+            "İşlem ID", "İşlem Tarihi", "Açıklama", "Alacak Tutar", "Borç Tutar","Anlık Net Tutar", "Ödeme Türü", "Fatura Eklenme Tarihi","Fatura Var mı?"
         ])
         self.transaction_table.setColumnHidden(0, True)
         self.transaction_table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -57,8 +57,9 @@ class TransactionScene(QWidget):
         header.setSectionResizeMode(2, QHeaderView.ResizeToContents)   # Alacak
         header.setSectionResizeMode(3, QHeaderView.ResizeToContents)   # Borç
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents) 
-        header.setSectionResizeMode(5, QHeaderView.Stretch)            # Ödeme Türü
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)   # Fatura
+        header.setSectionResizeMode(5, QHeaderView.Stretch)
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)           # Ödeme Türü
+        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)   # Fatura
 
         layout.addWidget(self.transaction_table)
         layout.addWidget(utility.create_horizontal_line())
@@ -192,6 +193,7 @@ class TransactionScene(QWidget):
         if dialog.exec_() == QDialog.Accepted:
 
             data = dialog.get_data()
+
         
             ts.add_transaction(
                 company_id=self.company_id,
@@ -200,8 +202,8 @@ class TransactionScene(QWidget):
                 credit=data['credit'],
                 debit=data['debit'],
                 payment_type=data['payment_type'],
-                bill=data['bill'],
-                
+                bill_added_date=data['bill_added_date'],
+                bill=data['bill'],  
             )
 
             self.refresh_page(company_id=self.company_id)
@@ -217,7 +219,7 @@ class TransactionScene(QWidget):
 
         self.transaction_table.setRowCount(len(transactions))
 
-        for row_idx, (transaction_id, transaction_date, explanation, credit_amount, debit_amount,current_balance, payment_type, bill) in enumerate(transactions):
+        for row_idx, (transaction_id, transaction_date, explanation, credit_amount, debit_amount,current_balance, payment_type, bill_added_date,bill) in enumerate(transactions):
             self.transaction_table.setItem(row_idx, 0, QTableWidgetItem(str(transaction_id)))  # Gizli sütun
             self.transaction_table.setItem(row_idx, 1, QTableWidgetItem(transaction_date))
             self.transaction_table.setItem(row_idx, 2, QTableWidgetItem(explanation or "-"))
@@ -225,12 +227,13 @@ class TransactionScene(QWidget):
             self.transaction_table.setItem(row_idx, 4, QTableWidgetItem(f"{debit_amount:,.2f} ₺"))
             self.transaction_table.setItem(row_idx, 5, QTableWidgetItem(f"{current_balance:,.2f} ₺"))
             self.transaction_table.setItem(row_idx, 6, QTableWidgetItem(payment_type or "-"))
+            if bill:
+                self.transaction_table.setItem(row_idx, 7, QTableWidgetItem(str(bill_added_date)))
+            else:
+                self.transaction_table.setItem(row_idx, 7, QTableWidgetItem("-"))
             bill_status = "var" if bill and bill.strip() != "" else "yok"
 
-
-            # Bill varsa "var", yoksa "yok" yaz
-            bill_status = "var" if bill and bill.strip() != "" else "yok"
-            self.transaction_table.setItem(row_idx, 7, QTableWidgetItem(bill_status))
+            self.transaction_table.setItem(row_idx, 8, QTableWidgetItem(bill_status))
 
     def calculate_amounts(self):
         company_id=self.main_window.company_scene.company_id

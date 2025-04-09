@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     debit_amount REAL NOT NULL,
     current_balance REAL NOT NULL DEFAULT 0,
     paymet_type TEXT,
+    bill_added_date TEXT,
     bill BLOB,
     FOREIGN KEY (company_id) REFERENCES company(company_id)
 );

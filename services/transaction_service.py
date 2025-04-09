@@ -9,7 +9,7 @@ def get_all_transaction(company_id):
     cursor = conn.cursor()
     
     cursor.execute("""
-        SELECT transaction_id, transaction_date, explanation, credit_amount, debit_amount, current_balance, paymet_type, bill
+        SELECT transaction_id, transaction_date, explanation, credit_amount, debit_amount, current_balance, paymet_type,bill_added_date, bill
         FROM transactions
         WHERE company_id = ?
         ORDER BY transaction_date ASC, transaction_id ASC
@@ -52,7 +52,7 @@ def calculate_amounts(company_id):
     }
     return amounts
 
-def add_transaction(company_id, date, explanation, credit, debit, payment_type, bill=None):
+def add_transaction(company_id, date, explanation, credit, debit, payment_type, bill_added_date=None,bill=None):
     conn = sqlite3.connect(c.DB_PATH)
     cursor = conn.cursor()
 
@@ -64,10 +64,11 @@ def add_transaction(company_id, date, explanation, credit, debit, payment_type, 
             credit_amount,
             debit_amount,
             paymet_type,
+            bill_added_date,
             bill
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (company_id, explanation, date, credit, debit, payment_type, bill))
+        VALUES (?, ?, ?, ?, ?, ?, ?,?)
+    """, (company_id, explanation, date, credit, debit, payment_type,bill_added_date, bill))
 
     conn.commit()
     conn.close()
@@ -109,13 +110,14 @@ def update_transaction(transaction_id, data):
 
     cursor.execute("""
         UPDATE transactions
-        SET explanation = ?, credit_amount = ?, debit_amount = ?, paymet_type = ?, bill = ?
+        SET explanation = ?, credit_amount = ?, debit_amount = ?, paymet_type = ?, bill_added_date = ? ,bill = ?
         WHERE transaction_id = ?
     """, (
         data["explanation"],
         data["credit"],
         data["debit"],
         data["payment_type"],
+        data["bill_added_date"],
         data["bill"],
         transaction_id
     ))

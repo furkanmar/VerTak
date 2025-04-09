@@ -8,7 +8,8 @@ from pdf2image import convert_from_path
 import tempfile
 import os
 from PIL import Image
-import sys
+import utility
+from utility import create_styled_lineedit
 
 class TransactionCreateDialog(QDialog):
     def __init__(self, parent=None, initial_data=None):
@@ -25,54 +26,71 @@ class TransactionCreateDialog(QDialog):
         self.zoom_level = 0.4
         self.init_ui()
 
+
+
     def init_ui(self):
         main_layout = QHBoxLayout()
+        main_layout.setContentsMargins(30, 30, 30, 30)
 
+        # === SOL PANEL ===
         left_layout = QVBoxLayout()
         left_layout.setSpacing(15)
         left_layout.setContentsMargins(20, 20, 20, 20)
 
-        # Tarih ve Saat bileşenleri
-        left_layout.addWidget(QLabel("Tarih"))
+        def create_label(text):
+            label = QLabel(text)
+            label.setStyleSheet("font-weight: bold; font-size: 13px;")
+            return label
+
+        # Tarih
+        left_layout.addWidget(create_label("Tarih"))
         self.calendar_widget = QCalendarWidget()
         self.calendar_widget.setSelectedDate(QDateTime.currentDateTime().date())
         left_layout.addWidget(self.calendar_widget)
 
-        left_layout.addWidget(QLabel("Saat"))
+        # Saat
+        left_layout.addWidget(create_label("Saat"))
         self.time_edit = QTimeEdit()
         self.time_edit.setDisplayFormat("HH:mm:ss")
         self.time_edit.setTime(QDateTime.currentDateTime().time())
+        self.time_edit.setStyleSheet(f"""
+            font-size: 14px;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        """)
         left_layout.addWidget(self.time_edit)
 
-
         # Açıklama
-        self.explanation_input = QLineEdit()
-        left_layout.addWidget(QLabel("Açıklama"))
+        left_layout.addWidget(create_label("Açıklama"))
+        self.explanation_input = create_styled_lineedit("Açıklama")
         left_layout.addWidget(self.explanation_input)
 
         # Alacak
-        self.credit_input = QLineEdit()
-        self.credit_input.setText("0")
-        left_layout.addWidget(QLabel("Alacak Tutarı *"))
+        left_layout.addWidget(create_label("Alacak Tutarı *"))
+        self.credit_input = create_styled_lineedit("0")
         left_layout.addWidget(self.credit_input)
 
         # Borç
-        self.debit_input = QLineEdit()
-        self.debit_input.setText("0")
-        left_layout.addWidget(QLabel("Borç Tutarı *"))
+        left_layout.addWidget(create_label("Borç Tutarı *"))
+        self.debit_input = create_styled_lineedit("0")
         left_layout.addWidget(self.debit_input)
 
         # Ödeme Türü
+        left_layout.addWidget(create_label("Ödeme Türü"))
         self.payment_combo = QComboBox()
         self.payment_combo.addItems(["Çek", "Nakit", "Kredi Kartı", "Havale"])
-        left_layout.addWidget(QLabel("Ödeme Türü"))
+        self.payment_combo.setStyleSheet("padding: 6px; font-size: 13px;")
         left_layout.addWidget(self.payment_combo)
 
-        # Fatura ekle
+        # Fatura Ekle
+        left_layout.addWidget(create_label("Fatura Ekle"))
+
         bill_layout = QHBoxLayout()
         self.bill_button = QPushButton("Fatura Seç")
         self.bill_button.setCursor(Qt.PointingHandCursor)
         self.bill_button.clicked.connect(self.select_bill_file)
+        self.bill_button.setStyleSheet("padding: 8px 16px; font-size: 14px;")
 
         self.bill_label = QLabel("Hiçbir dosya seçilmedi")
         self.bill_label.setStyleSheet("font-style: italic; color: gray")
@@ -81,7 +99,7 @@ class TransactionCreateDialog(QDialog):
         bill_layout.addWidget(self.bill_label)
         left_layout.addLayout(bill_layout)
 
-        # Butonlar
+        # Ekle / İptal Butonları
         button_layout = QHBoxLayout()
         cancel_btn = QPushButton("İptal")
         cancel_btn.clicked.connect(self.reject)
@@ -90,22 +108,31 @@ class TransactionCreateDialog(QDialog):
         save_btn.clicked.connect(self.submit_form)
         save_btn.setCursor(Qt.PointingHandCursor)
 
+        for btn in [cancel_btn, save_btn]:
+            btn.setStyleSheet("padding: 8px 16px; font-size: 14px;")
+
         button_layout.addWidget(cancel_btn)
         button_layout.addWidget(save_btn)
         left_layout.addLayout(button_layout)
 
+        # === SAĞ PANEL ===
+        right_layout = QVBoxLayout()
 
-        
-        # Sağ taraf: Fatura Önizlemesi
-        # PDF Görseli (Label)
+        preview_title = QLabel("Fatura Önizlemesi")
+        preview_title.setAlignment(Qt.AlignCenter)
+        preview_title.setStyleSheet("font-weight: bold; font-size: 16px;")
+        right_layout.addWidget(preview_title)
+
         self.preview_label = QLabel()
         self.preview_label.setAlignment(Qt.AlignCenter)
 
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet("border: 1px solid #ccc;")
         scroll_area.setWidget(self.preview_label)
+        right_layout.addWidget(scroll_area, stretch=9)
 
-        # Sayfa kontrol butonları
+        # Sayfa geçiş
         nav_layout = QHBoxLayout()
         self.prev_btn = QToolButton()
         self.prev_btn.setText("←")
@@ -121,35 +148,29 @@ class TransactionCreateDialog(QDialog):
         nav_layout.addWidget(self.prev_btn)
         nav_layout.addWidget(self.page_info)
         nav_layout.addWidget(self.next_btn)
+        right_layout.addLayout(nav_layout)
 
-        # Zoom kontrol
+        # Zoom kontrolleri
         zoom_layout = QHBoxLayout()
-        self.zoom_in_btn = QToolButton()
-        self.zoom_in_btn.setText("+")
-        self.zoom_in_btn.clicked.connect(self.zoom_in)
-
         self.zoom_out_btn = QToolButton()
         self.zoom_out_btn.setText("–")
         self.zoom_out_btn.clicked.connect(self.zoom_out)
 
+        self.zoom_in_btn = QToolButton()
+        self.zoom_in_btn.setText("+")
+        self.zoom_in_btn.clicked.connect(self.zoom_in)
+
         zoom_layout.addWidget(self.zoom_out_btn)
         zoom_layout.addWidget(QLabel("Zoom"))
         zoom_layout.addWidget(self.zoom_in_btn)
-
-        # Sağ taraf birleşimi
-        right_layout = QVBoxLayout()
-        right_layout.addWidget(QLabel("Fatura Önizlemesi"), stretch=1)
-        right_layout.addWidget(scroll_area, stretch=9)
-        right_layout.addLayout(nav_layout)
         right_layout.addLayout(zoom_layout)
 
-
-
-        # Ana yatay yerleşim
+        # Ana yerleşim
         main_layout.addLayout(left_layout, stretch=2)
-        main_layout.addLayout(right_layout, stretch=4)
-
+        main_layout.addLayout(right_layout, stretch=3)
         self.setLayout(main_layout)
+
+
 
         if self.initial_data:
             self.explanation_input.setText(self.initial_data.get("explanation", ""))
@@ -303,7 +324,9 @@ class TransactionCreateDialog(QDialog):
             "credit": self.credit_val,
             "debit": self.debit_val,
             "payment_type": self.payment_combo.currentText(),
+            "bill_added_date": utility.get_current_date() if hasattr(self, 'selected_bill_data') else None,
             "bill": self.selected_bill_data if hasattr(self, 'selected_bill_data') else None,
+
             "date": combined_datetime.toString("yyyy-MM-dd HH:mm:ss")
         }
 

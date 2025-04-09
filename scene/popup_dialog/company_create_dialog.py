@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 )
 from PyQt5.QtCore import Qt
+from utility import create_styled_lineedit
 
 class CompanyCreateDialog(QDialog):
     def __init__(self, parent=None, on_submit_callback=None, initial_data=None):
@@ -18,14 +19,17 @@ class CompanyCreateDialog(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
 
-        self.name_input = QLineEdit()
-        self.tax_input = QLineEdit()
-        self.rep_input = QLineEdit()
+        # Giriş alanları
+        self.name_input = create_styled_lineedit("Şirket adı giriniz")
+        self.tax_input = create_styled_lineedit("Vergi numarası giriniz (opsiyonel)")
+        self.rep_input = create_styled_lineedit("Temsilci adı giriniz (opsiyonel)")
 
         layout.addWidget(QLabel("Şirket Adı *"))
         layout.addWidget(self.name_input)
+
         layout.addWidget(QLabel("Vergi No"))
         layout.addWidget(self.tax_input)
+
         layout.addWidget(QLabel("Şirket Temsilcisi"))
         layout.addWidget(self.rep_input)
 
@@ -33,9 +37,14 @@ class CompanyCreateDialog(QDialog):
         button_box = QHBoxLayout()
         self.btn_cancel = QPushButton("İptal")
         self.btn_cancel.clicked.connect(self.reject)
+
         self.btn_submit = QPushButton("Kaydet" if self.initial_data else "Ekle")
         self.btn_submit.clicked.connect(self.submit_form)
         self.btn_submit.setCursor(Qt.PointingHandCursor)
+
+        for btn in [self.btn_cancel, self.btn_submit]:
+            btn.setStyleSheet("font-size: 14px; padding: 8px 16px;")
+
         button_box.addWidget(self.btn_cancel)
         button_box.addWidget(self.btn_submit)
         layout.addLayout(button_box)
