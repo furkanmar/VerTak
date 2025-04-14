@@ -1,6 +1,6 @@
 import sys
 import services.db_setup as db_setup 
-import scene.app as main_app
+import viewmodel.app as main_app
 import config as c
 from PyQt5.QtGui import QIcon
 

@@ -16,7 +16,7 @@ Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 Source: "InstallerBuild\VERTAK.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "InstallerBuild\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "InstallerBuild\resources\poppler\*"; DestDir: "{app}\resources\poppler"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "InstallerBuild\logo.png"; DestDir: "{app}"; Flags: ignoreversion  ; <-- LOGO EKLENDİ
+Source: "InstallerBuild\logo.png"; DestDir: "{app}"; Flags: ignoreversion  ; 
 
 [Icons]
 Name: "{group}\Veresiye Takip Sistemi"; Filename: "{app}\VERTAK.exe"

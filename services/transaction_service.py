@@ -35,10 +35,10 @@ def calculate_amounts(company_id):
     conn = sqlite3.connect(c.DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute("SELECT SUM(credit_amount) FROM transactions where company_id =? ",(company_id))
+    cursor.execute("SELECT SUM(credit_amount) FROM transactions where company_id =? ",(company_id,))
     total_credit = cursor.fetchone()[0] or 0
 
-    cursor.execute("SELECT SUM(debit_amount) FROM transactions where company_id =? ",(company_id))
+    cursor.execute("SELECT SUM(debit_amount) FROM transactions where company_id =? ",(company_id,))
     total_debit = cursor.fetchone()[0] or 0
 
     conn.close()
@@ -102,7 +102,6 @@ def recalculate_balances(company_id):
 
     conn.commit()
     conn.close()
-
 
 def update_transaction(transaction_id, data):
     conn = sqlite3.connect(c.DB_PATH)

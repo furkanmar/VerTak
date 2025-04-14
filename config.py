@@ -18,4 +18,12 @@ os.makedirs(APP_DATA_DIR, exist_ok=True)
 DB_PATH = os.path.join(APP_DATA_DIR, "vertak.db")  # yazılabilir klasör
 SQL_PATH = os.path.join(BASE_DIR, "data", "init_db.sql")
 
-LOGO_PATH = os.path.join(BASE_DIR, "logo.png")
+LOGO_PATH = os.path.join(BASE_DIR,"logo.png")
+
+def get_poppler_path():
+    if getattr(sys, 'frozen', False):  # Eğer .exe olarak çalışıyorsa
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, "resources", "poppler", "bin")

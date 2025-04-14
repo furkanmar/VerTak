@@ -126,6 +126,16 @@ def recalculate_company_balance(company_id):
         SET credit_amount = ?, debit_amount = ?, net_amount = ?
         WHERE company_id = ?
     """, (total_credit, total_debit, net_amount, company_id))
+    cursor.execute("""
+        UPDATE company
+        SET number_of_transaction = (
+            SELECT COUNT(*)
+            FROM transactions
+            WHERE company_id = ?
+        )
+        WHERE company_id = ?
+    """, (company_id, company_id))
+
 
     conn.commit()
     conn.close()
