@@ -25,6 +25,7 @@ class TransactionCreateDialog(QDialog, BaseFormWithPreview):
         self.form_ui = TransactionFormUI(self)
         self.setLayout(self.form_ui.layout)
         self.set_bill_label(lambda text: self.form_ui.bill_label.setText(text))
+
         if self.initial_data:
 
             self.form_ui.explanation_input.setText(self.initial_data.get("explanation", ""))
@@ -81,5 +82,6 @@ class TransactionCreateDialog(QDialog, BaseFormWithPreview):
             "bill": bill_info["bill"],
             "date": combined_datetime.toString("yyyy-MM-dd HH:mm:ss")
         }
+    
     def get_preview_widgets(self):
         return BaseFormWithPreview.get_preview_widgets(self)

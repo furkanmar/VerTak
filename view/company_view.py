@@ -21,8 +21,10 @@ class CompanyView(QWidget, TableSetupMixin, TableSummaryButtonsMixin):
 
         header_builder = BaseTableHeaderSection()
         header_layout, self.back_button, self.search_button = header_builder.create_table_header(
+            back_btn_text="← Çıkış Yap",
             title="Kayıtlı Şirket Listesi",
-            right_btn_text="🔍 Şirketi Aç"
+            right_btn_text="🔍 Şirketi Aç",
+            return_right_button=True
         )
         layout.addLayout(header_layout)
         headers=["Şirket ID", "Şirket Adı", "Toplam Alacak", "Toplam Borç", "Net Durum", "İşlem Sayısı"]
@@ -45,7 +47,6 @@ class CompanyView(QWidget, TableSetupMixin, TableSummaryButtonsMixin):
         layout.addWidget(utility.create_horizontal_line())
 
         layout.addLayout(self.create_summary_and_buttons())
-
 
         return layout
 

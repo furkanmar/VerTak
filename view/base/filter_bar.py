@@ -24,7 +24,6 @@ class TableFilterBar(QWidget):
             self.inputs[index] = input_field
             filters.addWidget(input_field)
 
-        # 🔴 Filtreleri Sıfırla butonu ekle
         reset_button = QPushButton("Filtreleri Sıfırla")
         reset_button.setStyleSheet("""
             QPushButton {
@@ -40,9 +39,9 @@ class TableFilterBar(QWidget):
             }
         """)
         reset_button.setFixedHeight(38)
-
         reset_button.setCursor(Qt.PointingHandCursor)
         reset_button.clicked.connect(self.clear_all_inputs)
+        
         filters.addStretch()
         filters.addWidget(reset_button)
 

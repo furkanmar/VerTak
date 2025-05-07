@@ -27,7 +27,7 @@ class TransactionView(QWidget,TableSetupMixin,TableSummaryButtonsMixin):
         header_builder = BaseTableHeaderSection()
         header_layout, self.back_button, self.view_bill_btn = header_builder.create_table_header(
             title="Kayıtlı İşlemler Listesi",
-            right_btn_text="Fatura Göster"
+            return_right_button=False
         )
         layout.addLayout(header_layout)
 
@@ -57,7 +57,6 @@ class TransactionView(QWidget,TableSetupMixin,TableSummaryButtonsMixin):
         # Toplamlar
         layout.addLayout(self.create_summary_and_buttons())
         self.setLayout(layout)
-
 
     def apply_filter(self, column: int, text: str):
         normalized_text = text.lower().replace(",", "").strip()

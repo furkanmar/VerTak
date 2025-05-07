@@ -12,5 +12,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(c.LOGO_PATH))
     main_window = main_app.VerTakApp()
+    
     main_window.show()
     sys.exit(app.exec_())

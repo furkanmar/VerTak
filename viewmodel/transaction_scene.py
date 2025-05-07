@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QDialog, QMessageBox,QTableWidgetItem
+from PyQt5.QtWidgets import QWidget, QDialog, QMessageBox,QTableWidgetItem , QPushButton
 from PyQt5.QtCore import Qt
 from services import transaction_service as ts
 import viewmodel.popup_dialog.transaction_create_dialog as tcd
@@ -6,6 +6,10 @@ import viewmodel.popup_dialog.bill_viewer as bv
 from view.transaction_view import TransactionView
 from utility import get_login_credentials
 from services.user_service import check_log_info
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
+import os
+from services.transaction_service import get_transaction_by_id, update_transaction
+from datetime import datetime
 
 class TransactionScene(QWidget):
     def __init__(self, main_window):
@@ -19,7 +23,6 @@ class TransactionScene(QWidget):
 
         # Event Binding
         self.ui.back_button.clicked.connect(self.main_window.switch_to_company_scene)
-        self.ui.view_bill_btn.clicked.connect(self.open_bill_viewer)
         self.ui.btn_edit.clicked.connect(self.edit_transaction)
         self.ui.btn_delete.clicked.connect(self.delete_transaction)
         self.ui.btn_create.clicked.connect(self.create_transaction)
@@ -49,6 +52,18 @@ class TransactionScene(QWidget):
             table.setItem(row_idx, 6, QTableWidgetItem(ptype or "-"))
             table.setItem(row_idx, 7, QTableWidgetItem(str(bill_date) if bill else "-"))
             table.setItem(row_idx, 8, QTableWidgetItem("var" if bill and bill.strip() != "" else "yok"))
+            # Fatura için özel buton
+            btn = QPushButton("Var" if bill and bill.strip() else "Yok")
+            btn.setStyleSheet("padding: 2px; font-size: 12px;")
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.setProperty("transaction_id", tid)  
+
+            if bill and bill.strip():
+                btn.clicked.connect(lambda _, tid=tid: self.open_bill_viewer(int(tid)))
+            else:
+                btn.clicked.connect(lambda _, tid=tid: self.select_bill_file(int(tid)))
+
+            table.setCellWidget(row_idx, 8, btn)
 
     def calculate_amounts(self):
         amounts = ts.calculate_amounts(self.company_id)
@@ -88,6 +103,51 @@ class TransactionScene(QWidget):
             ts.update_transaction(tid, dialog.get_data())
             self.refresh_page()
 
+    def select_bill_file(self, transaction_id: int):
+
+
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Fatura Dosyasını Seç",
+            "",
+            "Desteklenen Dosyalar (*.png *.jpg *.jpeg *.pdf);;Tüm Dosyalar (*)"
+        )
+
+        if not file_path:
+            QMessageBox.information(self, "Bilgi", "Herhangi bir dosya seçilmedi.")
+            return
+
+        ext = os.path.splitext(file_path)[-1].lower()
+        if ext not in [".png", ".jpg", ".jpeg", ".pdf"]:
+            QMessageBox.warning(self, "Uyarı", "Seçilen dosya türü desteklenmiyor.")
+            return
+
+        try:
+            with open(file_path, "rb") as f:
+                bill_binary = f.read()
+
+            existing_data = get_transaction_by_id(transaction_id)
+            if not existing_data:
+                QMessageBox.critical(self, "Hata", "İlgili işlem veritabanında bulunamadı.")
+                return
+
+            updated_data = {
+                "explanation": existing_data["explanation"],
+                "credit": existing_data["credit"],
+                "debit": existing_data["debit"],
+                "payment_type": existing_data["payment_type"],
+                "bill_added_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "bill": bill_binary
+            }
+
+            update_transaction(transaction_id, updated_data)
+
+            QMessageBox.information(self, "Başarılı", f"Fatura başarıyla eklendi:\n{os.path.basename(file_path)}")
+            self.get_all_transaction()
+
+        except Exception as e:
+            QMessageBox.critical(self, "Hata", f"Dosya okunurken hata oluştu:\n{str(e)}")
+
     def delete_transaction(self):
         row = self.ui.transaction_table.currentRow()
         if row == -1:
@@ -107,15 +167,20 @@ class TransactionScene(QWidget):
             QMessageBox.information(self, "Başarılı", "İşlem başarıyla silindi.")
             self.refresh_page()
 
-    def open_bill_viewer(self):
-        row = self.ui.transaction_table.currentRow()
-        if row == -1:
-            QMessageBox.warning(self, "Uyarı", "Lütfen bir işlem seçin.")
-            return
-        tid = int(self.ui.transaction_table.item(row, 0).text())
+    def open_bill_viewer(self,tranction_id=None):
+        if tranction_id:
+            tid=tranction_id
+        else:
+            row = self.ui.transaction_table.currentRow()
+            if row == -1:
+                QMessageBox.warning(self, "Uyarı", "Lütfen bir işlem seçin.")
+                return
+            tid = int(self.ui.transaction_table.item(row, 0).text())
+
         bill = ts.get_bill_by_id(tid)
         if bill:
             viewer = bv.BillViewer(bill)
             viewer.exec_()
         else:
-            QMessageBox.information(self, "Bilgi", "Fatura bulunamadı.")
+            QMessageBox.information(self, "Bilgi", "Fatura bulunamadı.")    
+
